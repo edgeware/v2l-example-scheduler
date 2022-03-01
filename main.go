@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -23,17 +22,22 @@ const (
 )
 
 func main() {
-	assetPaths, err := v2l.GetAssetPaths(assetDir)
+	err := v2l.DeleteChannel(server, channelName) // Delete any old channel and schedule
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = v2l.DeleteAllAssetPaths(server) // Now, when assets are not used, they can be deleted
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	assetPaths, err := v2l.DiscoverAssetPaths(assetDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	err = v2l.AddAssetPaths(server, assetPaths)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = v2l.DeleteChannel(server, channelName) // Delete any old channel and schedule
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,7 +56,7 @@ TickerLoop:
 	for {
 		select {
 		case <-signalCh:
-			fmt.Printf("Stopping loop\n")
+			log.Printf("Stopping loop\n")
 			break TickerLoop
 		case t := <-ticker.C:
 			err = v2l.UpdateSchedule(server, channel, assetPaths, t)

@@ -3,6 +3,7 @@ package v2l
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -21,29 +22,25 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 		Entries:              nil,
 	}
 	nextEntryStart := lastSch.GopNrAtScheduleStart
-	var nextDrop int64
+	var gopsUntilNextDrop int64
 	for i, e := range lastSch.Entries {
-		entryEnd := nextEntryStart + (e.Len - e.Offset)
+		nextEntryStart += e.Len // Now start of the one after this
 		if i == 0 {
-			nextDrop = entryEnd - (nowGopNr - channel.SlidingWindowNrGops) + 1
-		}
-		if entryEnd < nowGopNr-channel.SlidingWindowNrGops {
-			// Drop this entry
-			newSch.GopNrAtScheduleStart += e.Len
-			if e.SCTEEventID > 0 {
-				newSch.GopNrAfterLastAd = entryEnd
+			gopsUntilNextDrop = nextEntryStart - (nowGopNr - channel.SlidingWindowNrGops)
+			if gopsUntilNextDrop <= 0 { // Drop this entry
+				newSch.GopNrAtScheduleStart += e.Len
+				if e.SCTEEventID > 0 {
+					newSch.GopNrAfterLastAd = nextEntryStart
+				}
+				scheduleChanged = true
+				log.Printf("Removed %s from schedule\n", e.AssetID)
+				continue
 			}
-			nextEntryStart = entryEnd
-			scheduleChanged = true
-			fmt.Printf("Removed %s from schedule\n", e.AssetID)
-			continue
 		}
 		newSch.Entries = append(newSch.Entries, e)
-		nextEntryStart += e.Len
 	}
-	nextAdd := nextEntryStart - channel.FutureScheduleNrGops - nowGopNr + 1
-	if nowGopNr > nextEntryStart-channel.FutureScheduleNrGops {
-		// Time to add an add, program etc
+	gopsUntilNextAdd := nextEntryStart - channel.FutureScheduleNrGops - nowGopNr
+	if gopsUntilNextAdd <= 0 { // Time to add an add, program etc
 		lastEntry := newSch.Entries[len(newSch.Entries)-1]
 		if lastEntry.SCTEEventID > 0 { // Last entry is an ad
 			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "program", 0, 0, 0))
@@ -52,7 +49,7 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "ad", 0, 0, channel.LastSCTEEventID))
 		}
 		newEntry := newSch.Entries[len(newSch.Entries)-1]
-		fmt.Printf("Added %s with SCTE id %d to schedule\n", newEntry.AssetID, newEntry.SCTEEventID)
+		log.Printf("Added %s with SCTE id %d to schedule\n", newEntry.AssetID, newEntry.SCTEEventID)
 		scheduleChanged = true
 	}
 	if scheduleChanged {
@@ -69,7 +66,7 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 		printJSON("responded schedule", &respSchedule)
 		channel.Schedule = &respSchedule
 	} else {
-		fmt.Printf("No schedule change at %s. Next add/drop in %d/%d GoPs\n", now, nextAdd, nextDrop)
+		log.Printf("No schedule change. Next add/drop in %d/%d GoPs\n", gopsUntilNextAdd, gopsUntilNextDrop)
 	}
 	return nil
 }

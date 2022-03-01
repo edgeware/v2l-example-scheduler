@@ -1,19 +1,46 @@
 package v2l
 
 import (
+	"bytes"
+	"encoding/json"
 	"io/fs"
 	"math/rand"
 	"path/filepath"
 	"strings"
 )
 
-// addAssetPaths - add all directories containing a content_info.json file
+// DeleteAllAssetPaths - delete all asset paths from server
+func DeleteAllAssetPaths(server string) error {
+	respBody, err := httpRequest(server, "GET", "/api/v1/assetpaths", nil)
+	if err != nil {
+		return err
+	}
+	var assetPaths []AssetPath
+	err = json.Unmarshal(respBody, &assetPaths)
+	if err != nil {
+		return err
+	}
+	assetIDs := make([]string, 0, len(assetPaths))
+	for _, ap := range assetPaths {
+		assetIDs = append(assetIDs, ap.ID)
+	}
+	reqBody, err := json.Marshal(assetIDs)
+	if err != nil {
+		return err
+	}
+	aIDsBuf := bytes.NewBuffer(reqBody)
+	_, err = httpRequest(server, "DELETE", "/api/v1/assetpaths", aIDsBuf)
+	return err
+}
+
+// AddAssetPaths - add all directories containing a content_info.json file
 func AddAssetPaths(server string, assetPaths []AssetPath) error {
 	_, err := uploadJSON(server, "POST", "/api/v1/assetpaths", assetPaths)
 	return err
 }
 
-func GetAssetPaths(dir string) ([]AssetPath, error) {
+// DiscoverAssetPaths - add all directories containing a content_info.json file
+func DiscoverAssetPaths(dir string) ([]AssetPath, error) {
 	var aps []AssetPath
 	err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -21,7 +48,11 @@ func GetAssetPaths(dir string) ([]AssetPath, error) {
 		}
 		name := info.Name()
 		if name == "content_info.json" {
-			assetPath := filepath.Dir(path) // The dir containing content_info.json
+			absAssetPath, err := filepath.Abs(path)
+			if err != nil {
+				return err
+			}
+			assetPath := filepath.Dir(absAssetPath) // The dir containing content_info.json
 			assetName := filepath.Base(assetPath)
 			aps = append(aps, AssetPath{assetName, assetPath})
 		}

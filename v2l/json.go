@@ -2,7 +2,7 @@ package v2l
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 )
 
 // AssetPath - minimal information about an asset
@@ -58,5 +58,5 @@ type Entry struct {
 
 func printJSON(name string, data interface{}) {
 	raw, _ := json.MarshalIndent(data, "", "  ")
-	fmt.Printf("%s: %s\n", name, string(raw))
+	log.Printf("%s: %s\n", name, string(raw))
 }

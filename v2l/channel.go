@@ -2,7 +2,7 @@ package v2l
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"time"
 )
 
@@ -10,7 +10,7 @@ import (
 func CreateChannel(server, chName, masterAssetID string, gopDurMS, nrGopsPerSegment, slidingWindowNrGops, futureScheduleNrGops int64,
 	assetPaths []AssetPath) (*Channel, error) {
 	startGopNr := nowToSegNr(gopDurMS, nrGopsPerSegment) * nrGopsPerSegment
-	fmt.Printf("Start time for channels set to %s\n", time.Duration(startGopNr*gopDurMS)*(time.Millisecond))
+	log.Printf("Start time for channels set to %s\n", time.Duration(startGopNr*gopDurMS)*(time.Millisecond))
 
 	schedule := Schedule{
 		GopNrAtScheduleStart: startGopNr,
