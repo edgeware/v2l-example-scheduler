@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" profiles="urn:mpeg:dash:profile:isoff-on-demand:2011" type="static" mediaPresentationDuration="PT40S" minBufferTime="PT3S">
+  <Period>
+    <AdaptationSet mimeType="video/mp4" startWithSAP="1" scanType="progressive" segmentAlignment="true">
+      <Representation bandwidth="5000000" codecs="avc1.64001F" frameRate="25/1" height="720" id="video_h264_5000kbps" width="1280">
+        <BaseURL>video_h264_5000kbps.cmfv</BaseURL>
+        <SegmentBase indexRange="687-802">
+          <Initialization range="0-686"></Initialization>
+        </SegmentBase>
+      </Representation>
+    </AdaptationSet>
+    <AdaptationSet mimeType="audio/mp4" startWithSAP="1" segmentAlignment="true" lang="und">
+      <Representation audioSamplingRate="48000" bandwidth="96000" codecs="mp4a.40.2" id="audio_aac_en_96kbps">
+        <BaseURL>audio_aac_en_96kbps.cmfa</BaseURL>
+        <SegmentBase indexRange="642-757">
+          <Initialization range="0-641"></Initialization>
+        </SegmentBase>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>

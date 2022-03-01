@@ -1,0 +1,53 @@
+{
+  "version": "1.5",
+  "content_id": "/Users/tobbe/proj/github/ew/esb3019/cmd/ew-vod2cbm/content_2s/sintel_40s",
+  "config_id": 0,
+  "hls_target_duration": 6,
+  "segment_timescale": 1000,
+  "average_segment_duration": 6000,
+  "max_segment_duration": 6000,
+  "constant_gop_duration_ms": 2000,
+  "content_duration_ms": 40000,
+  "reference_time_vs_epoch_s": 0,
+  "ad_markers_enabled": false,
+  "variants": [
+    {
+      "media_type": "audio",
+      "subtype": "aac",
+      "name": "audio_aac_en_96kbps",
+      "timescale": 48000,
+      "media_file": "audio_aac_en_96kbps.cmfa",
+      "segment_info_file": "audio_aac_en_96kbps.dat",
+      "bitrate": 96000,
+      "codec": "mp4a.40.2",
+      "track_id": 1,
+      "calc_avg_bandwidth": 96099,
+      "num_channels": 2,
+      "samplerate": 48000,
+      "decoder_config": "1190",
+      "lang": "en"
+    },
+    {
+      "media_type": "video",
+      "subtype": "h264",
+      "name": "video_h264_5000kbps",
+      "timescale": 12800,
+      "media_file": "video_h264_5000kbps.cmfv",
+      "segment_info_file": "video_h264_5000kbps.dat",
+      "bitrate": 5000000,
+      "width": 1280,
+      "height": 720,
+      "picture_aspect_ratio": "16:9",
+      "sps": "6764001facd9405005bb011000000300100000030320f1831960",
+      "pps": "68ebecb22c",
+      "codec": "avc1.64001F",
+      "track_id": 1,
+      "frame_rate_fraction": [
+        25,
+        1
+      ],
+      "num_i_frames_per_segment": 3,
+      "calc_avg_bandwidth": 5007289
+    }
+  ]
+}
