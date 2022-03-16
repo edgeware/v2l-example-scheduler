@@ -90,3 +90,7 @@ Alternatively, you can run it without building it as
      $ go run .
 
 In both cases, there are currently no command-line parameters.
+
+## Checking the EPG
+
+A very simple EPG is available at `http://localhost:8090/epg/ch1`.
