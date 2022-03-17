@@ -20,6 +20,8 @@ type Channel struct {
 	NrGopsPerSeg int64 `json:"nrGopsPerSegment"`
 	// ID of asset defining the valid tracks, bitrates etc
 	MasterAssetID string `json:"masterAssetID"`
+	// Path to content template
+	ContentTemplatePath string `json:"contentTemplatePath"`
 	// Start time relative epoch (1970-01-01) in seconds
 	StartTimeS int64 `json:"startTimeS"`
 	// Loop schedule or not

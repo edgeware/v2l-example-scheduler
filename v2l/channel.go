@@ -3,11 +3,12 @@ package v2l
 import (
 	"encoding/json"
 	"log"
+	"path/filepath"
 	"time"
 )
 
 // CreateChannel - create a channel with two assets and an ad in between
-func CreateChannel(server, chName, masterAssetID string, gopDurMS, nrGopsPerSegment, slidingWindowNrGops, futureScheduleNrGops int64,
+func CreateChannel(server, chName, contentTemplatePath string, gopDurMS, nrGopsPerSegment, slidingWindowNrGops, futureScheduleNrGops int64,
 	assetPaths []AssetPath) (*Channel, error) {
 	startGopNr := nowToSegNr(gopDurMS, nrGopsPerSegment) * nrGopsPerSegment
 	log.Printf("Start time for channels set to %s\n", time.Duration(startGopNr*gopDurMS)*(time.Millisecond))
@@ -21,18 +22,22 @@ func CreateChannel(server, chName, masterAssetID string, gopDurMS, nrGopsPerSegm
 			//randomEntry(assetPaths, "program", 0, 5, 0),
 		},
 	}
+	absContentTemplatePath, err := filepath.Abs(contentTemplatePath)
+	if err != nil {
+		return nil, err
+	}
 	channel := Channel{
 		Name:                 chName,
 		GopDurMS:             gopDurMS,
 		NrGopsPerSeg:         nrGopsPerSegment,
-		MasterAssetID:        masterAssetID,
+		ContentTemplatePath:  absContentTemplatePath,
 		StartTimeS:           0,     // All times are counted from 1970-01-01
 		DoLoop:               false, // Do not loop
 		Schedule:             &schedule,
 		SlidingWindowNrGops:  slidingWindowNrGops,
 		FutureScheduleNrGops: futureScheduleNrGops,
 	}
-	_, err := uploadJSON(server, "POST", "/api/v1/channels", channel)
+	_, err = uploadJSON(server, "POST", "/api/v1/channels", channel)
 	if err != nil {
 		return nil, err
 	}
