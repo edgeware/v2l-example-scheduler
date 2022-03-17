@@ -56,7 +56,8 @@ The `ew-vod2cbm` server has a Swagger front-end available at
 In general, all assets need to be coded in the same way and all video must have
 the same GoP durations.
 
-A further restriction is that all content must be in Edgeware ESF format. That is
+A further restriction is that all content must be in either Edgeware ESF format
+or in DASH OnDemand format. ESF is
 a CMAF-based format but with some additional metadata in form of a
 `content_info.json` file and some binary `.dat` files. Each such asset must be accessible
 via a file path, HTTP URL or on an S3 bucket.
@@ -65,9 +66,14 @@ The example content in this repo all have a GoP duration of 2000ms.
 
 ## Compatibility
 
-Currently, this server works towards `ew-vod2cbm` version 0.8. It is assumed to be at
+Currently, this server works towards `ew-vod2cbm` version 0.10.
+It is assumed to be at
 `localhost:8090`, but another address can be set in the `main.go` file.
 The `ew-vod2cbm` must have access to the `assets` directory.
+
+The media tracks being produced are described in the `content template` file
+`content_template.json`, and the input tracks must be compatible
+with what is to be generated.
 
 
 ## How to run the program
@@ -94,3 +100,8 @@ In both cases, there are currently no command-line parameters.
 ## Checking the EPG
 
 A very simple EPG is available at `http://localhost:8090/epg/ch1`.
+
+## Further documentation
+
+The `ew-vod2cbm` service is not yet generally released, but there is online documentation
+describing it and its API at https://docs.test.edgeware.tv/streambuilder.

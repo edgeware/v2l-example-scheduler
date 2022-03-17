@@ -13,12 +13,12 @@ const (
 	assetDir             = "assets"
 	server               = "http://localhost:8090"
 	channelName          = "ch1"
-	gopDurMS             = 2000      // Note, all content must have this same GoP duration
-	nrGopsPerSegment     = 2         // Decides how long output segments will be in average
-	slidingWindowNrGops  = 40        // Should be at least a minute before removing stuff
-	futureScheduleNrGops = 15        // Threshold for when to add new entries in schedule
-	masterAssetID        = "bbb_40s" // Asset from which content_info is fetched
-	updatePeriodS        = 2         // How often the schedule should be checked for updates in seconds
+	gopDurMS             = 2000                    // Note, all content must have this same GoP duration
+	nrGopsPerSegment     = 2                       // Decides how long output segments will be in average
+	slidingWindowNrGops  = 40                      // Should be at least a minute before removing stuff
+	futureScheduleNrGops = 15                      // Threshold for when to add new entries in schedule
+	contentTemplatePath  = "content_template.json" // Template describing input and output
+	updatePeriodS        = 2                       // How often the schedule should be checked for updates in seconds
 )
 
 func main() {
@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// Create channel with a few assets and get state back
-	channel, err := v2l.CreateChannel(server, channelName, masterAssetID, gopDurMS, nrGopsPerSegment,
+	channel, err := v2l.CreateChannel(server, channelName, contentTemplatePath, gopDurMS, nrGopsPerSegment,
 		slidingWindowNrGops, futureScheduleNrGops, assetPaths)
 	if err != nil {
 		log.Fatal(err)

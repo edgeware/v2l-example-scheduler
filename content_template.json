@@ -1,0 +1,33 @@
+{
+    "version": "1.0",
+    "constant_gop_duration_ms": 2000,
+    "variants": [
+        {
+            "media_type": "audio",
+            "subtype": "aac",
+            "name": "audio_aac_en_96kbps",
+            "bitrate": 96000,
+            "codec": "mp4a.40.2",
+            "num_channels": 2,
+            "samplerate": 48000,
+            "decoder_config": "1190",
+            "lang": "en"
+        },
+        {
+            "media_type": "video",
+            "subtype": "h264",
+            "name": "video_h264_5000kbps",
+            "bitrate": 5000000,
+            "width": 1280,
+            "height": 720,
+            "picture_aspect_ratio": "16:9",
+            "sps": "6764001facd9405005bb011000000300100000030320f1831960",
+            "pps": "68ebecb22c",
+            "codec": "avc1.64001F",
+            "frame_rate_fraction": [
+                25,
+                1
+            ]
+        }
+    ]
+}
