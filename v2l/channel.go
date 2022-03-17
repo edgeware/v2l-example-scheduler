@@ -3,6 +3,7 @@ package v2l
 import (
 	"encoding/json"
 	"log"
+	"path/filepath"
 	"time"
 )
 
@@ -21,18 +22,22 @@ func CreateChannel(server, chName, contentTemplatePath string, gopDurMS, nrGopsP
 			//randomEntry(assetPaths, "program", 0, 5, 0),
 		},
 	}
+	absContentTemplatePath, err := filepath.Abs(contentTemplatePath)
+	if err != nil {
+		return nil, err
+	}
 	channel := Channel{
 		Name:                 chName,
 		GopDurMS:             gopDurMS,
 		NrGopsPerSeg:         nrGopsPerSegment,
-		ContentTemplatePath:  contentTemplatePath,
+		ContentTemplatePath:  absContentTemplatePath,
 		StartTimeS:           0,     // All times are counted from 1970-01-01
 		DoLoop:               false, // Do not loop
 		Schedule:             &schedule,
 		SlidingWindowNrGops:  slidingWindowNrGops,
 		FutureScheduleNrGops: futureScheduleNrGops,
 	}
-	_, err := uploadJSON(server, "POST", "/api/v1/channels", channel)
+	_, err = uploadJSON(server, "POST", "/api/v1/channels", channel)
 	if err != nil {
 		return nil, err
 	}
