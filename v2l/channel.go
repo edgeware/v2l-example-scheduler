@@ -53,7 +53,6 @@ func CreateChannel(server, chName, contentTemplatePath string, gopDurMS, nrGopsP
 	printJSON("schedule", &schedule)
 	channel.Schedule = &schedule
 	channel.LastSCTEEventID = 1
-	channel.SlidingWindowNrGops = 1
 	return &channel, nil
 }
 
