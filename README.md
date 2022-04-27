@@ -104,4 +104,4 @@ A very simple EPG is available at `http://localhost:8090/epg/ch1`.
 ## Further documentation
 
 The `ew-vod2cbm` service is not yet generally released, but there is online documentation
-describing it and its API at https://docs.test.edgeware.tv/streambuilder.
+describing it and its API at https://docs.agilecontent.com/docs/acp/esb3019.
