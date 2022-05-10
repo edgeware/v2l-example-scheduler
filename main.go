@@ -29,7 +29,7 @@ func main() {
 
 	err = v2l.DeleteAllAssetPaths(server) // Now, when assets are not used, they can be deleted
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err.Error())
 	}
 
 	assetPaths, err := v2l.DiscoverAssetPaths(assetDir)
