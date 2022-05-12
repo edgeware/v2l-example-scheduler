@@ -2,13 +2,15 @@ package v2l
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"path/filepath"
 	"time"
 )
 
 // CreateChannel - create a channel with two assets and an ad in between
-func CreateChannel(server, chName, contentTemplatePath string, gopDurMS, nrGopsPerSegment, slidingWindowNrGops, futureScheduleNrGops int64,
+func CreateChannel(server, chName, contentTemplatePath string,
+	gopDurMS, nrGopsPerSegment, slidingWindowNrGops, futureScheduleNrGops int64,
 	assetPaths []AssetPath) (*Channel, error) {
 	startGopNr := nowToSegNr(gopDurMS, nrGopsPerSegment) * nrGopsPerSegment
 	log.Printf("Start time for channels set to %s\n", time.Duration(startGopNr*gopDurMS)*(time.Millisecond))
@@ -54,6 +56,45 @@ func CreateChannel(server, chName, contentTemplatePath string, gopDurMS, nrGopsP
 	channel.Schedule = &schedule
 	channel.LastSCTEEventID = 1
 	return &channel, nil
+}
+
+// CreateChannels - create a slice filled with channels
+func CreateChannels(nofChannels int,
+	server, contentTemplatePath string,
+	gopDurMS, nrGopsPerSegment, slidingWindowNrGops, futureScheduleNrGops int64,
+	assetPaths []AssetPath) ([]*Channel, error) {
+	var channels []*Channel
+	for ch := 1; ch <= nofChannels; ch++ {
+		channelName := fmt.Sprintf("ch%d", ch)
+		// Create channel with a few assets and get state back
+		channel, err := CreateChannel(server, channelName, contentTemplatePath,
+			gopDurMS, nrGopsPerSegment,
+			slidingWindowNrGops, futureScheduleNrGops,
+			assetPaths)
+		if err != nil {
+			return nil, err
+		}
+		channels = append(channels, channel)
+	}
+	return channels, nil
+}
+
+// DeleteChannel - delete a channel
+func DeleteChannel(server, channelName string) error {
+	_, err := httpRequest(server, "DELETE", "/api/v1/channels/"+channelName, nil)
+	return err
+}
+
+// DeleteChannels - delete a number of channels
+func DeleteChannels(nofChannels int, server string) error {
+	for i := 1; i <= nofChannels; i++ {
+		channelName := fmt.Sprintf("ch%d", i)
+		err := DeleteChannel(server, channelName)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // nowToSegNr - calculate what segment was last produced

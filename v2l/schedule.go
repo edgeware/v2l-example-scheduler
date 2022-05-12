@@ -13,6 +13,11 @@ import (
 // of schedule.
 // GopNrAtScheduleStart and GopNrAfterLastAd must have consistent values.
 func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now time.Time) error {
+	shouldLog := false
+	if channel.Name == "ch1" {
+		shouldLog = true
+	}
+
 	scheduleChanged := false
 	lastSch := channel.Schedule
 	nowGopNr := nowToGopNr(channel.GopDurMS, now)
@@ -33,7 +38,9 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 					newSch.GopNrAfterLastAd = nextEntryStart
 				}
 				scheduleChanged = true
-				log.Printf("Removed %s from schedule\n", e.AssetID)
+				if shouldLog {
+					log.Printf("Removed %s from schedule\n", e.AssetID)
+				}
 				continue
 			}
 		}
@@ -49,11 +56,16 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "ad", 0, 0, channel.LastSCTEEventID))
 		}
 		newEntry := newSch.Entries[len(newSch.Entries)-1]
-		log.Printf("Added %s with SCTE id %d to schedule\n", newEntry.AssetID, newEntry.SCTEEventID)
+		if shouldLog {
+			log.Printf("Added %s with SCTE id %d to schedule\n", newEntry.AssetID, newEntry.SCTEEventID)
+		}
 		scheduleChanged = true
 	}
 	if scheduleChanged {
-		printJSON("schedule to upload", newSch)
+		if shouldLog {
+			printJSON("schedule to upload", newSch)
+		}
+
 		respBody, err := uploadJSON(server, "PUT", "/api/v1/schedule/"+channel.Name, &newSch)
 		if err != nil {
 			return fmt.Errorf("problem uploading schedule: %s\n", err)
@@ -63,10 +75,14 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 		if err != nil {
 			return err
 		}
-		printJSON("responded schedule", &respSchedule)
+		if shouldLog {
+			printJSON("responded schedule", &respSchedule)
+		}
 		channel.Schedule = &respSchedule
 	} else {
-		log.Printf("No schedule change. Next add/drop in %d/%d GoPs\n", gopsUntilNextAdd, gopsUntilNextDrop)
+		if shouldLog {
+			log.Printf("No schedule change. Next add/drop in %d/%d GoPs\n", gopsUntilNextAdd, gopsUntilNextDrop)
+		}
 	}
 	return nil
 }

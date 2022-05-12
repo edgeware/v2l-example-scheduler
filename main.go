@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/edgeware/v2l-example-scheduler/v2l"
@@ -22,7 +23,17 @@ const (
 )
 
 func main() {
-	err := v2l.DeleteChannel(server, channelName) // Delete any old channel and schedule
+	nofChannels := 1
+	var err error
+	if len(os.Args) > 1 {
+		nofChannels, err = strconv.Atoi(os.Args[1])
+		if err != nil {
+			println("Usage: ", os.Args[0], "[<number-of-channels>] default:1")
+			os.Exit(1)
+		}
+	}
+
+	err = v2l.DeleteChannels(nofChannels, server) // Delete any old channel and schedule
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,7 +54,7 @@ func main() {
 	}
 
 	// Create channel with a few assets and get state back
-	channel, err := v2l.CreateChannel(server, channelName, contentTemplatePath, gopDurMS, nrGopsPerSegment,
+	channels, err := v2l.CreateChannels(nofChannels, server, contentTemplatePath, gopDurMS, nrGopsPerSegment,
 		slidingWindowNrGops, futureScheduleNrGops, assetPaths)
 	if err != nil {
 		log.Fatal(err)
@@ -51,7 +62,9 @@ func main() {
 
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt)
-	ticker := time.NewTicker(updatePeriodS * time.Second)
+
+	ticker := time.NewTicker(updatePeriodS * time.Second / time.Duration(nofChannels))
+	chIndex := 0
 TickerLoop:
 	for {
 		select {
@@ -59,10 +72,11 @@ TickerLoop:
 			log.Printf("Stopping loop\n")
 			break TickerLoop
 		case t := <-ticker.C:
-			err = v2l.UpdateSchedule(server, channel, assetPaths, t)
+			err = v2l.UpdateSchedule(server, channels[chIndex%nofChannels], assetPaths, t)
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
+		chIndex++
 	}
 }
