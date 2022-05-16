@@ -3,10 +3,14 @@ package v2l
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/edgeware/sbgo/pkg/esf"
 )
 
 // DeleteAllAssetPaths - delete all asset paths from server
@@ -54,7 +58,11 @@ func DiscoverAssetPaths(dir string) ([]AssetPath, error) {
 			}
 			assetPath := filepath.Dir(absAssetPath) // The dir containing content_info.json
 			assetName := filepath.Base(assetPath)
-			aps = append(aps, AssetPath{assetName, assetPath})
+			assetLen, err := getAssetLen(absAssetPath)
+			if err != nil {
+				return err
+			}
+			aps = append(aps, AssetPath{assetName, assetPath, assetLen})
 		}
 		return nil
 	})
@@ -62,48 +70,51 @@ func DiscoverAssetPaths(dir string) ([]AssetPath, error) {
 }
 
 // randomEntry - return a random entry given kind and assetPaths. Set offset, length, sctedID
-func randomEntry(assetPaths []AssetPath, kind string, offset, length, scteID int64) Entry {
-	var programs []string
-	var ads []string
-	var fillers []string
-	var slates []string
+func randomEntry(assetPaths []AssetPath, kind string, scteID int64) Entry {
+	var selectedAssets []AssetPath
+	var subPath = "/" + kind + "s/"
 	for _, ap := range assetPaths {
-		if strings.Contains(ap.Path, "/filler") {
-			fillers = append(fillers, ap.ID)
-			continue
+		if strings.Contains(ap.Path, subPath) {
+			selectedAssets = append(selectedAssets, ap)
 		}
-		if strings.Contains(ap.Path, "/slates/") {
-			fillers = append(fillers, ap.ID)
-			continue
-		}
-		if strings.Contains(ap.Path, "/ads/") {
-			ads = append(ads, ap.ID)
-			continue
-		}
-		programs = append(programs, ap.ID)
 	}
-	var assetID string
-	switch kind {
-	case "filler":
-		idx := rand.Intn(len(fillers))
-		assetID = fillers[idx]
-	case "slates":
-		idx := rand.Intn(len(slates))
-		assetID = slates[idx]
-	case "program":
-		idx := rand.Intn(len(programs))
-		assetID = programs[idx]
-	case "ad":
-		idx := rand.Intn(len(ads))
-		assetID = ads[idx]
-	default:
-		panic("Unknown kind of asset")
+
+	if len(selectedAssets) == 0 {
+		panic("No  such asset kind: " + kind)
 	}
+
+	asset := selectedAssets[rand.Intn(len(selectedAssets))]
+
 	return Entry{
-		Name:        assetID,
-		AssetID:     assetID,
-		Offset:      offset,
-		Len:         length,
+		Name:        asset.ID,
+		AssetID:     asset.ID,
+		Offset:      0,
+		Len:         asset.len,
 		SCTEEventID: scteID,
 	}
+}
+
+// getAssetLen -- get length in number of GoPs
+func getAssetLen(assetPath string) (int64, error) {
+	bytes, err := os.ReadFile(assetPath)
+	if err != nil {
+		return 0, err
+	}
+
+	ci, err := esf.ParseContentInfo(bytes)
+	if err != nil {
+		return 0, err
+	}
+
+	cd := ci.ContentDurationMS
+	if cd == 0 {
+		return 0, fmt.Errorf("ContentDurationMS not found")
+	}
+
+	gd := ci.GOPDurationMS
+	if gd == 0 {
+		return 0, fmt.Errorf("GOPDurationMS not found")
+	}
+
+	return cd / gd, nil
 }

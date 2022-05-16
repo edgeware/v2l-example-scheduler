@@ -7,7 +7,20 @@ import (
 	"time"
 )
 
-// updateSchedule - update schedule by removing old entries and adding new
+func (schedule *Schedule) LastSCTEEventID() int64 {
+	entries := schedule.Entries
+	for i := len(entries) - 1; i >= 0; i-- {
+		if entries[i].SCTEEventID != 0 {
+			return entries[i].SCTEEventID
+		}
+	}
+	return 0
+}
+
+// UpdateSchedule - update schedule by removing old entries and adding new
+//
+// TODO: delete after reviewing func (channel *Channel) UpdateSchedule(server string, ...)
+//
 // for old ones, the limit is now - sliding window
 // for new ones, a new asset or ad will be added if within 30s of end
 // of schedule.
@@ -50,10 +63,10 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 	if gopsUntilNextAdd <= 0 { // Time to add an add, program etc
 		lastEntry := newSch.Entries[len(newSch.Entries)-1]
 		if lastEntry.SCTEEventID > 0 { // Last entry is an ad
-			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "program", 0, 0, 0))
+			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "program", 0))
 		} else {
 			channel.LastSCTEEventID++
-			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "ad", 0, 0, channel.LastSCTEEventID))
+			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "ad", channel.LastSCTEEventID))
 		}
 		newEntry := newSch.Entries[len(newSch.Entries)-1]
 		if shouldLog {
@@ -68,7 +81,7 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 
 		respBody, err := uploadJSON(server, "PUT", "/api/v1/schedule/"+channel.Name, &newSch)
 		if err != nil {
-			return fmt.Errorf("problem uploading schedule: %s\n", err)
+			return fmt.Errorf("problem uploading schedule: %s", err)
 		}
 		respSchedule := Schedule{}
 		err = json.Unmarshal(respBody, &respSchedule)
@@ -91,4 +104,39 @@ func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now
 func nowToGopNr(gopDurMS int64, now time.Time) int64 {
 	nowMS := now.UnixNano() / 1_000_000
 	return nowMS / gopDurMS
+}
+
+// CreateSchedule -- create a complete schedule to fill the entire live window
+//
+// TODO: delete after reviewing func (channel *Channel) CreateSchedule(...)
+func CreateSchedule(slidingWindowNrGops, futureScheduleNrGops, gopDurMS int64, assetPaths []AssetPath) Schedule {
+	nowGopNr := nowToGopNr(gopDurMS, time.Now())
+	startGopNr := nowGopNr - slidingWindowNrGops - 1
+	latestGopNr := nowGopNr + futureScheduleNrGops + 1
+	_ = latestGopNr
+	schedule := Schedule{
+		GopNrAtScheduleStart: startGopNr,
+		GopNrAfterLastAd:     0,
+		Entries:              []Entry{},
+	}
+
+	currGopNr := startGopNr
+	scteId := 1
+	for {
+		progEntry := randomEntry(assetPaths, "program", 0)
+		schedule.Entries = append(schedule.Entries, progEntry)
+		currGopNr += progEntry.Len
+
+		adEntry := randomEntry(assetPaths, "ad", int64(scteId))
+		scteId++
+		schedule.Entries = append(schedule.Entries, adEntry)
+		currGopNr += adEntry.Len
+
+		if currGopNr >= latestGopNr {
+			i := len(schedule.Entries)
+			_ = i
+			break
+		}
+	}
+	return schedule
 }
