@@ -23,11 +23,11 @@ const (
 )
 
 func main() {
-	nofChannels := 1
+	nrChannels := 1
 	var slidingWindowNrGops int64 = slidingWindowNrGopsDefault
 	var err error
 	if len(os.Args) > 1 {
-		nofChannels, err = strconv.Atoi(os.Args[1])
+		nrChannels, err = strconv.Atoi(os.Args[1])
 		if err != nil {
 			printUsage()
 		}
@@ -41,7 +41,7 @@ func main() {
 		slidingWindowNrGops = int64(slidingWindowS) * 1000 / gopDurMS
 	}
 
-	err = v2l.DeleteChannels(nofChannels, server) // Delete any old channel and schedule
+	err = v2l.DeleteChannels(nrChannels, server) // Delete any old channel and schedule
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func main() {
 	}
 
 	// Create channel with a few assets and get state back
-	channels, err := v2l.CreateChannels(nofChannels, server, contentTemplatePath, gopDurMS, nrGopsPerSegment,
+	channels, err := v2l.CreateChannels(nrChannels, server, contentTemplatePath, gopDurMS, nrGopsPerSegment,
 		slidingWindowNrGops, futureScheduleNrGops, assetPaths)
 	if err != nil {
 		log.Fatal(err)
@@ -71,7 +71,7 @@ func main() {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt)
 
-	ticker := time.NewTicker(updatePeriodS * time.Second / time.Duration(nofChannels))
+	ticker := time.NewTicker(updatePeriodS * time.Second / time.Duration(nrChannels))
 	chIndex := 0
 TickerLoop:
 	for {
@@ -80,12 +80,15 @@ TickerLoop:
 			log.Printf("Stopping loop\n")
 			break TickerLoop
 		case t := <-ticker.C:
-			err = channels[chIndex%nofChannels].UpdateSchedule(server, assetPaths, t)
+			err = channels[chIndex].UpdateSchedule(server, assetPaths, t)
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
 		chIndex++
+		if chIndex == nrChannels {
+			chIndex = 0
+		}
 	}
 }
 

@@ -108,12 +108,12 @@ func getAssetLen(assetPath string) (int64, error) {
 
 	cd := ci.ContentDurationMS
 	if cd == 0 {
-		return 0, fmt.Errorf("ContentDurationMS not found")
+		return 0, fmt.Errorf("\"content_duration_ms\" not found")
 	}
 
 	gd := ci.GOPDurationMS
 	if gd == 0 {
-		return 0, fmt.Errorf("GOPDurationMS not found")
+		return 0, fmt.Errorf("\"constant_gop_duration_ms\" not found")
 	}
 
 	return cd / gd, nil

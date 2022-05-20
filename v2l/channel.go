@@ -90,11 +90,14 @@ func (channel *Channel) UpdateSchedule(server string, assetPaths []AssetPath, no
 }
 
 // CreateSchedule -- create a complete schedule to fill the entire live window
+// the schedule is filled with asset pairs of types: "program" & "ad"
 func (channel *Channel) CreateSchedule(slidingWindowNrGops, futureScheduleNrGops, gopDurMS int64, assetPaths []AssetPath) {
 	nowGopNr := nowToGopNr(gopDurMS, time.Now())
 	startGopNr := nowGopNr - slidingWindowNrGops - 1
 	latestGopNr := nowGopNr + futureScheduleNrGops + 1
 
+	startTime := time.Unix(int64(startGopNr*gopDurMS/1000), 0)
+	log.Printf("New schedule\n    gopNrAtScheduleStart: %d\n    Time: %s", startGopNr, startTime)
 	channel.Schedule = &Schedule{
 		GopNrAtScheduleStart: startGopNr,
 		GopNrAfterLastAd:     0,
@@ -118,13 +121,11 @@ func (channel *Channel) CreateSchedule(slidingWindowNrGops, futureScheduleNrGops
 	}
 }
 
-// CreateChannel - create a channel with two assets and an ad in between
+// CreateChannel - create a channel with a fully populated schedule
 func CreateChannel(server, chName, contentTemplatePath string,
 	gopDurMS, nrGopsPerSegment, slidingWindowNrGops, futureScheduleNrGops int64,
 	assetPaths []AssetPath) (*Channel, error) {
 	startGopNr := nowToGopNr(gopDurMS, time.Now())
-
-	log.Printf("Start time for channels set to %s\n", time.Duration(startGopNr*gopDurMS)*(time.Millisecond))
 
 	absContentTemplatePath, err := filepath.Abs(contentTemplatePath)
 	if err != nil {
@@ -170,12 +171,12 @@ func CreateChannel(server, chName, contentTemplatePath string,
 }
 
 // CreateChannels - create a slice filled with channels
-func CreateChannels(nofChannels int,
+func CreateChannels(nrChannels int,
 	server, contentTemplatePath string,
 	gopDurMS, nrGopsPerSegment, slidingWindowNrGops, futureScheduleNrGops int64,
 	assetPaths []AssetPath) ([]*Channel, error) {
 	var channels []*Channel
-	for ch := 1; ch <= nofChannels; ch++ {
+	for ch := 1; ch <= nrChannels; ch++ {
 		channelName := fmt.Sprintf("ch%d", ch)
 		// Create channel with a few assets and get state back
 		channel, err := CreateChannel(server, channelName, contentTemplatePath,
@@ -197,8 +198,8 @@ func DeleteChannel(server, channelName string) error {
 }
 
 // DeleteChannels - delete a number of channels: "ch1"..."chn"
-func DeleteChannels(nofChannels int, server string) error {
-	for i := 1; i <= nofChannels; i++ {
+func DeleteChannels(nrChannels int, server string) error {
+	for i := 1; i <= nrChannels; i++ {
 		channelName := fmt.Sprintf("ch%d", i)
 		err := DeleteChannel(server, channelName)
 		if err != nil {
