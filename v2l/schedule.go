@@ -1,74 +1,17 @@
 package v2l
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
 	"time"
 )
 
-// updateSchedule - update schedule by removing old entries and adding new
-// for old ones, the limit is now - sliding window
-// for new ones, a new asset or ad will be added if within 30s of end
-// of schedule.
-// GopNrAtScheduleStart and GopNrAfterLastAd must have consistent values.
-func UpdateSchedule(server string, channel *Channel, assetPaths []AssetPath, now time.Time) error {
-	scheduleChanged := false
-	lastSch := channel.Schedule
-	nowGopNr := nowToGopNr(channel.GopDurMS, now)
-	newSch := Schedule{
-		GopNrAtScheduleStart: lastSch.GopNrAtScheduleStart, // Starting point
-		GopNrAfterLastAd:     lastSch.GopNrAfterLastAd,
-		Entries:              nil,
-	}
-	nextEntryStart := lastSch.GopNrAtScheduleStart
-	var gopsUntilNextDrop int64
-	for i, e := range lastSch.Entries {
-		nextEntryStart += e.Len // Now start of the one after this
-		if i == 0 {
-			gopsUntilNextDrop = nextEntryStart - (nowGopNr - channel.SlidingWindowNrGops)
-			if gopsUntilNextDrop <= 0 { // Drop this entry
-				newSch.GopNrAtScheduleStart += e.Len
-				if e.SCTEEventID > 0 {
-					newSch.GopNrAfterLastAd = nextEntryStart
-				}
-				scheduleChanged = true
-				log.Printf("Removed %s from schedule\n", e.AssetID)
-				continue
-			}
+func (schedule *Schedule) LastSCTEEventID() int64 {
+	entries := schedule.Entries
+	for i := len(entries) - 1; i >= 0; i-- {
+		if entries[i].SCTEEventID != 0 {
+			return entries[i].SCTEEventID
 		}
-		newSch.Entries = append(newSch.Entries, e)
 	}
-	gopsUntilNextAdd := nextEntryStart - channel.FutureScheduleNrGops - nowGopNr
-	if gopsUntilNextAdd <= 0 { // Time to add an add, program etc
-		lastEntry := newSch.Entries[len(newSch.Entries)-1]
-		if lastEntry.SCTEEventID > 0 { // Last entry is an ad
-			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "program", 0, 0, 0))
-		} else {
-			channel.LastSCTEEventID++
-			newSch.Entries = append(newSch.Entries, randomEntry(assetPaths, "ad", 0, 0, channel.LastSCTEEventID))
-		}
-		newEntry := newSch.Entries[len(newSch.Entries)-1]
-		log.Printf("Added %s with SCTE id %d to schedule\n", newEntry.AssetID, newEntry.SCTEEventID)
-		scheduleChanged = true
-	}
-	if scheduleChanged {
-		printJSON("schedule to upload", newSch)
-		respBody, err := uploadJSON(server, "PUT", "/api/v1/schedule/"+channel.Name, &newSch)
-		if err != nil {
-			return fmt.Errorf("problem uploading schedule: %s\n", err)
-		}
-		respSchedule := Schedule{}
-		err = json.Unmarshal(respBody, &respSchedule)
-		if err != nil {
-			return err
-		}
-		printJSON("responded schedule", &respSchedule)
-		channel.Schedule = &respSchedule
-	} else {
-		log.Printf("No schedule change. Next add/drop in %d/%d GoPs\n", gopsUntilNextAdd, gopsUntilNextDrop)
-	}
-	return nil
+	return 0
 }
 
 // nowToGopNr - what GoP is currently being produced

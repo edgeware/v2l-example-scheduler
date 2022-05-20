@@ -9,6 +9,7 @@ import (
 type AssetPath struct {
 	ID   string `json:"id"`
 	Path string `json:"path"`
+	len  int64  // do not marshall
 }
 
 type Channel struct {
@@ -30,7 +31,7 @@ type Channel struct {
 	Schedule *Schedule `json:"schedule"`
 	// LastSCTEEventID - internal book keeping for incrementing SCTE Event ID
 	LastSCTEEventID int64 `json:"-"`
-	// SlidingWindowNrGops - internal constant for how long sliding window to use
+	// SlidingWindowNrGops - internal value for how long sliding window to use
 	SlidingWindowNrGops int64 `json:"-"`
 	// FutureScheduleNrGops - threshold for when to add future entries to schedule
 	FutureScheduleNrGops int64 `json:"-"`

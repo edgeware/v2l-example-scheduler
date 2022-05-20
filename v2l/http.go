@@ -47,8 +47,3 @@ func uploadJSON(server string, method, apiPath string, data interface{}) ([]byte
 	}
 	return resp, nil
 }
-
-func DeleteChannel(server, channelName string) error {
-	_, err := httpRequest(server, "DELETE", "/api/v1/channels/"+channelName, nil)
-	return err
-}
