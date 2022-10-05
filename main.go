@@ -11,8 +11,8 @@ import (
 
 const (
 	assetDir             = "assets"
-	server               = "http://localhost:8090"
-	channelName          = "ch1"
+	server               = "http://localhost:8099"
+	channelName          = "auto_channel1"
 	gopDurMS             = 2000                    // Note, all content must have this same GoP duration
 	nrGopsPerSegment     = 2                       // Decides how long output segments will be in average
 	slidingWindowNrGops  = 40                      // Should be at least a minute before removing stuff
