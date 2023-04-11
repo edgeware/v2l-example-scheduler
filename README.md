@@ -66,21 +66,20 @@ The example content in this repo all have a GoP duration of 2000ms.
 
 ## Compatibility
 
-Currently, this server works towards `ew-vod2cbm` version 0.10.
-It is assumed to be at
-`localhost:8090`, but another address can be set in the `main.go` file.
+Currently, this server works towards version 1.2.0 pf `ew-vod2cbm`.
+It is assumed to be at `localhost:8090`, but another address can be set
+in the `main.go` file.
 The `ew-vod2cbm` must have access to the `assets` directory.
 
 The media tracks being produced are described in the `content template` file
 `content_template.json`, and the input tracks must be compatible
-with what is to be generated.
-
+with that file when it comes to GoP duration. Other conditions like the
+number of tracks don't need to be fully aligned.
 
 ## How to run the program
 
-You need to have an `ESB-3015/ew-vod2cbm` server running at `localhost:8090`. It needs a config file, which currently (v0.8) needs
-a value for `defaultGopDurMS`. Such a config file is provided as
-`ew-vod2cbm-config/config_2s_gops.json`.
+You need to have an `ESB-3015/ew-vod2cbm` server running at `localhost:8090` with
+no configuration file.
 
 To run the program you need `go` installed. You can also get a compiled binary that you can
 run on any platform.
@@ -103,5 +102,5 @@ A very simple EPG is available at `http://localhost:8090/epg/ch1`.
 
 ## Further documentation
 
-The `ew-vod2cbm` service is not yet generally released, but there is online documentation
-describing it and its API at https://docs.agilecontent.com/docs/acp/esb3019.
+The online documentation for `ew-vod2cbm` and its API can be found
+at https://docs.agilecontent.com/docs/acp/esb3019.
