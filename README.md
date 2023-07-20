@@ -25,6 +25,8 @@ of the accessible window. The window, as many other parameters, are
 measured in number of GoPs. These values are set as constants in
 `main.go`.
 
+Below is a sequence diagram showing the communication between this scheduler and a `vod2cbm` server.
+
 ```mermaid
 sequenceDiagram
     participant v2ls as v2l-example-scheduler
@@ -54,7 +56,8 @@ The `ew-vod2cbm` server has a Swagger front-end available at
 ### The assets
 
 In general, all assets need to be coded in the same way and all video must have
-the same GoP durations.
+the same GoP durations. The segment length can be any integral multiple of the
+GoP duration since each segment is built from GoPs.
 
 A further restriction is that all content must be in either Edgeware ESF format
 or in DASH OnDemand format. ESF is
@@ -66,23 +69,23 @@ The example content in this repo all have a GoP duration of 2000ms.
 
 ## Compatibility
 
-Currently, this server works towards `ew-vod2cbm` version 0.10.
-It is assumed to be at
-`localhost:8090`, but another address can be set in the `main.go` file.
-The `ew-vod2cbm` must have access to the `assets` directory.
+This example scheduler should work towards all versions of `ew-vod2cbm`.
+The `ew-vod2cbm` server is assumed to be at `localhost:8090`, but another address,
+can be set in the `main.go` file.
+The `ew-vod2cbm` must have access to the `assets` directory. The path is set
+in the `main.go` file. The default is a local directory named `assets`, but one
+could instead use another directory or an HTTP location.
 
 The media tracks being produced are described in the `content template` file
 `content_template.json`, and the input tracks must be compatible
-with what is to be generated.
-
+with that template (for more about compatibility, check the documentation for `ew-vod2cbm`).
 
 ## How to run the program
 
-You need to have an `ESB-3015/ew-vod2cbm` server running at `localhost:8090`. It needs a config file, which currently (v0.8) needs
-a value for `defaultGopDurMS`. Such a config file is provided as
-`ew-vod2cbm-config/config_2s_gops.json`.
+You need to have an `ESB-3015/ew-vod2cbm` server running at `localhost:8090`.
+It does not need a config file, since everything it needs is sent via HTTP from this scheduler.
 
-To run the program you need `go` installed. You can also get a compiled binary that you can
+To compile the program you need `go` installed. You can also get a compiled binary that you can
 run on any platform.
 
 The project has no dependencies on other repos, so the binary can be built by simply running
@@ -103,5 +106,5 @@ A very simple EPG is available at `http://localhost:8090/epg/ch1`.
 
 ## Further documentation
 
-The `ew-vod2cbm` service is not yet generally released, but there is online documentation
-describing it and its API at https://docs.agilecontent.com/docs/acp/esb3019.
+The `ew-vod2cbm` documentation is available online at
+https://docs.agilecontent.com/docs/acp/esb3019.
