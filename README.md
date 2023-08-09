@@ -1,16 +1,26 @@
 # v2l-example-scheduler
 
-This is example code to show how to use the REST API of
-the Agile Content/Edgeware ESB-3019 `ew-vod2cbm` service to
-provide a linear channel with a schedule which is updated as time passes.
+This is a simple example scheduler to show how the 
+Agile Content/Edgeware ESB-3019 `ew-vod2cbm` service
+can be controlled via its REST API.
+
+The scheduler makes an initial channel, and then adds new assets
+and removes lod as time is passing.
+
+A new feature is the possibility to switch to a live source with
+minimal delay. That requires that the corresponding support is in
+the `ew-vod2cbm` version that is used. That feature is further described
+in the [README_live.md](README_live.md) document.
 
 ## Description
 
 This simple scheduling service generates and updates the schedule of linear channel
-from VoD assets and ads. The schedule is posted to a `ew-vod2cbm` service,
+from VoD assets and ads and a possible live source, when configured.
+The schedule is posted to a `ew-vod2cbm` service,
 that serves the actual channel via HTTP to a StreamBuilder repackager.
 Every second entry in the schedule is an ad, and every second a program.
-The entries are added randomly among the assets found in the `assets` directory, and are classified as ads or programs depending on their paths. In a true CMS
+The entries are added randomly among the assets found in the `assets` directory,
+and are classified as ads or programs depending on their paths. In a true CMS
 system, there may of course be more metadata about each asset.
 
 One does not need to schedule the whole asset. With the `offset` and
@@ -25,15 +35,13 @@ of the accessible window. The window, as many other parameters, are
 measured in number of GoPs. These values are set as constants in
 `main.go`.
 
-Below is a sequence diagram showing the communication between this scheduler and a `vod2cbm` server.
-
 ```mermaid
 sequenceDiagram
     participant v2ls as v2l-example-scheduler
     participant vod2cbm as ew-vod2cbm
     participant storage
     v2ls->>vod2cbm: DELETE ch1
-    Note right of vod2cbm: delete any previous version
+    Note right of vod2cbm: delete any previous channel data 
     v2ls->>vod2cbm: DELETE assetpaths
     Note right of vod2cbm: only asset paths not in any schedule can be removed
     v2ls->>storage: read asset directories
@@ -56,8 +64,7 @@ The `ew-vod2cbm` server has a Swagger front-end available at
 ### The assets
 
 In general, all assets need to be coded in the same way and all video must have
-the same GoP durations. The segment length can be any integral multiple of the
-GoP duration since each segment is built from GoPs.
+the same GoP durations.
 
 A further restriction is that all content must be in either Edgeware ESF format
 or in DASH OnDemand format. ESF is
@@ -69,30 +76,28 @@ The example content in this repo all have a GoP duration of 2000ms.
 
 ## Compatibility
 
-This example scheduler should work towards all versions of `ew-vod2cbm`.
-The `ew-vod2cbm` server is assumed to be at `localhost:8090`, but another address,
-can be set in the `main.go` file.
-The `ew-vod2cbm` must have access to the `assets` directory. The path is set
-in the `main.go` file. The default is a local directory named `assets`, but one
-could instead use another directory or an HTTP location.
+Currently, this server works towards `ew-vod2cbm` with live extensions.
+It is assumed to be at `localhost:8090`, but another address can be set in the `main.go` file.
+The `ew-vod2cbm` must have access to the `assets` directory.
 
 The media tracks being produced are described in the `content template` file
 `content_template.json`, and the input tracks must be compatible
-with that template (for more about compatibility, check the documentation for `ew-vod2cbm`).
+with what is to be generated.
 
 ## How to run the program
 
-You need to have an `ESB-3015/ew-vod2cbm` server running at `localhost:8090`.
-It does not need a config file, since everything it needs is sent via HTTP from this scheduler.
+You need to have an `ESB-3019/ew-vod2cbm` server running at `localhost:8090`.
+It does not need a configuration file specified, but it needs access to the `assets` directory,
+so it is convenient to start it in top directory of this repo.
 
-To compile the program you need `go` installed. You can also get a compiled binary that you can
+To run the scheduler program you need `go` installed. You can also get a compiled binary that you can
 run on any platform.
 
 The project has no dependencies on other repos, so the binary can be built by simply running
 
     $ go build .
 
-which will build the binary `v2l-example-scheduler`.
+which will build the binary `v2l-live-demo-scheduler`.
 
 Alternatively, you can run it without building it as
 
@@ -106,5 +111,5 @@ A very simple EPG is available at `http://localhost:8090/epg/ch1`.
 
 ## Further documentation
 
-The `ew-vod2cbm` documentation is available online at
-https://docs.agilecontent.com/docs/acp/esb3019.
+The `ew-vod2cbm` service is not yet generally released, but there is online documentation
+describing it and its API at https://docs.agilecontent.com/docs/acp/esb3019.

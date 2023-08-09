@@ -5,12 +5,6 @@ import (
 	"log"
 )
 
-// AssetPath - minimal information about an asset
-type AssetPath struct {
-	ID   string `json:"id"`
-	Path string `json:"path"`
-}
-
 type Channel struct {
 	// Unique name
 	Name string `json:"name"`

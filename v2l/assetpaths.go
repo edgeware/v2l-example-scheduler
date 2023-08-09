@@ -9,6 +9,18 @@ import (
 	"strings"
 )
 
+const (
+	LIVE_NAME   = "live"
+	LIVE_LENGTH = 1_000_000 // Don't limit
+)
+
+// AssetPath - minimal information about an asset
+type AssetPath struct {
+	ID     string `json:"id"`
+	Path   string `json:"path"`
+	IsLive bool   `json:"isLive,omitempty"`
+}
+
 // DeleteAllAssetPaths - delete all asset paths from server
 func DeleteAllAssetPaths(server string) error {
 	respBody, err := httpRequest(server, "GET", "/api/v1/assetpaths", nil)
@@ -39,8 +51,8 @@ func AddAssetPaths(server string, assetPaths []AssetPath) error {
 	return err
 }
 
-// DiscoverAssetPaths - add all directories containing a content_info.json file
-func DiscoverAssetPaths(dir string) ([]AssetPath, error) {
+// DiscoverVodAssetPaths - add all directories containing a content_info.json file
+func DiscoverVodAssetPaths(dir string) ([]AssetPath, error) {
 	var aps []AssetPath
 	err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -54,7 +66,7 @@ func DiscoverAssetPaths(dir string) ([]AssetPath, error) {
 			}
 			assetPath := filepath.Dir(absAssetPath) // The dir containing content_info.json
 			assetName := filepath.Base(assetPath)
-			aps = append(aps, AssetPath{assetName, assetPath})
+			aps = append(aps, AssetPath{assetName, assetPath, false})
 		}
 		return nil
 	})
@@ -68,19 +80,22 @@ func randomEntry(assetPaths []AssetPath, kind string, offset, length, scteID int
 	var fillers []string
 	var slates []string
 	for _, ap := range assetPaths {
-		if strings.Contains(ap.Path, "/filler") {
+		switch {
+		case strings.Contains(ap.Path, "/filler"):
 			fillers = append(fillers, ap.ID)
-			continue
-		}
-		if strings.Contains(ap.Path, "/slates/") {
+		case strings.Contains(ap.Path, "/slates/"):
 			fillers = append(fillers, ap.ID)
-			continue
-		}
-		if strings.Contains(ap.Path, "/ads/") {
+		case strings.Contains(ap.Path, "/ads/"):
 			ads = append(ads, ap.ID)
-			continue
+		case strings.Contains(ap.Path, "/programs"):
+			//TODO. Change back. Right now sintel represents live
+			if !strings.Contains(ap.Path, "sintel") {
+				programs = append(programs, ap.ID)
+			}
+
+		default:
+			// Just drop
 		}
-		programs = append(programs, ap.ID)
 	}
 	var assetID string
 	switch kind {
